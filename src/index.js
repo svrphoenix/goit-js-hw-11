@@ -1,76 +1,104 @@
-import './css/styles.css';
-// import debounce from 'lodash.debounce';
+import './css/style.css';
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import SimpleLightbox from "simplelightbox";
 import "simplelightbox/dist/simple-lightbox.min.css";
+import { PixabayApiService } from './js/pixabay-service-api';
 
-// const DEBOUNCE_DELAY = 300;
+const pixabayApiService = new PixabayApiService();
 
-// const refs = {
-//   searchBox: document.querySelector('#search-box'),
-//   countryList: document.querySelector('.country-list'),
-//   infoBox: document.querySelector('.country-info'),
-// };
+const refs = {
+  searchForm: document.querySelector('#search-form'),
+  gallery: document.querySelector('.gallery'),
+  loadMoreBtn: document.querySelector('.load-more'),
+};
 
-// refs.searchBox.addEventListener('input', debounce(onInputSearch, DEBOUNCE_DELAY));
+refs.searchForm.addEventListener('submit', onFormSubmit);
+refs.loadMoreBtn.addEventListener('click', loadImages);
 
-// function onInputSearch(evt) {
-//   const { target } = evt;
-//   const searchValue = target.value.trim();
-//   renderClear(refs.countryList, refs.infoBox);
+refs.loadMoreBtn.style.display = 'none';
 
-//   if (searchValue === '') {
-//     return;
-//   }
+function onFormSubmit(evt) {
+  evt.preventDefault();
+  refs.loadMoreBtn.style.display = 'none';
+  renderClear(refs.gallery);
 
-//   fetchCountries(searchValue).then(countries => {
-//     if (countries.length > 10) {
-//       Notify.warning('Too many matches found. Please enter a more specific name.');
-//       return;
-//     }
-//     if (countries.length > 1) {
-//       renderList(countries, refs.countryList);
-//       return;
-//     }
-//     renderCountry(countries, refs.infoBox);
-//   }).catch(err => {
-//     Notify.failure(`Oops, there is no country with that name! ${err} `);
-//   });
-// }
+  const { searchQuery } = evt.currentTarget.elements;
+  const searchString = searchQuery.value.trim();
 
-// function renderList(countries, ulRef) {
-// ` <div class="photo-card">
-//   <img src="" alt="" loading="lazy" />
-//   <div class="info">
-//     <p class="info-item">
-//       <b>Likes</b>
-//     </p>
-//     <p class="info-item">
-//       <b>Views</b>
-//     </p>
-//     <p class="info-item">
-//       <b>Comments</b>
-//     </p>
-//     <p class="info-item">
-//       <b>Downloads</b>
-//     </p>
-//   </div>
-// </div> `
-//   const countryListMarkup = countries.map(country => `<li class="country-item">
-//     <img class="country-flag" src="${country.flags.svg}" alt="flag of ${country.name.official}">
-//       <p>${country.name.official}</p></li>`).join('');
-//   ulRef.insertAdjacentHTML('afterbegin', countryListMarkup);
-// }
+  if (searchString === '') {
+    Notify.warning('Please enter an image name.');
+    return;
+  }
 
-// function renderCountry(countries, tagRef) {
-//   const countryMarkup = countries.map(country => `<div class="country-header" ><img class="country-flag" src="${country.flags.svg}" alt="flag of ${country.name}">
-//   <h1>${country.name.official}</h1></div>
-//   <p><span class="label">Capital</span>: ${country.capital}</p>
-//   <p><span class="label">Population</span>: ${country.population}</p>
-//   <p><span class="label">Languages</span>: ${Object.values(country.languages).join(', ')}</p>`).join('');
-//   tagRef.insertAdjacentHTML('afterbegin', countryMarkup);
-// }
+  pixabayApiService.query = searchString;
+  pixabayApiService.resetPage();
+  loadImages();
+}
 
-// function renderClear(...refs) {
-//   refs.forEach(ref => ref.innerHTML = '');
-// }
+async function loadImages() {
+  try {
+    const imagesObject = await pixabayApiService.readPixabayImages();
+    const imagesArray = imagesObject.hits;
+
+    if (imagesArray.length === 0) {
+      Notify.warning('Sorry, there are no images matching your search query. Please try again.');
+      return;
+    }
+
+    if (pixabayApiService.page === 1) Notify.info(`Hooray! We found ${imagesObject.totalHits} images.`);
+
+    renderGallery(imagesArray, refs.gallery);
+    pixabayApiService.incrementPage();
+
+    if (imagesArray.length < 40) {
+      refs.loadMoreBtn.style.display = 'none';
+      Notify.info("We're sorry, but you've reached the end of search results.");
+    } else {
+      refs.loadMoreBtn.style.display = 'flex';
+    }
+  } catch (error) {
+    return Notify.failure(`Error on server: ${error}. Please, repeat query.`);
+  }
+}
+
+function renderGallery(images, ulRef) {
+  const galleryMarkup = images.map(image =>
+    `<a class="photo-link" href="${image.largeImageURL}">
+    <div class="photo-card">
+    <div class="photo">
+    <img src="${image.webformatURL}" alt="${image.tags}" loading="lazy"/>
+    </div>
+            <div class="info">
+                <p class="info-item">
+                    <b>Likes</b>
+                    ${image.likes}
+                </p>
+                <p class="info-item">
+                    <b>Views</b>
+                    ${image.views}
+                </p>
+                <p class="info-item">
+                    <b>Comments</b>
+                    ${image.comments}
+                </p>
+                <p class="info-item">
+                    <b>Downloads</b>
+                    ${image.downloads}
+                </p>
+            </div>
+    </div>
+</a>`
+  ).join('');
+  ulRef.insertAdjacentHTML('beforeend', galleryMarkup);
+  simpleLightBox.refresh();
+
+}
+
+function renderClear(...refs) {
+  refs.forEach(ref => ref.innerHTML = '');
+}
+
+const simpleLightBox = new SimpleLightbox('.gallery a', {
+  captionsData: 'alt',
+  captionDelay: 250,
+});
