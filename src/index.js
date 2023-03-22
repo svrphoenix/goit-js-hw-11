@@ -5,6 +5,10 @@ import "simplelightbox/dist/simple-lightbox.min.css";
 import { PixabayApiService } from './js/pixabay-service-api';
 
 const pixabayApiService = new PixabayApiService();
+const simpleLightBox = new SimpleLightbox('.gallery a', {
+  captionsData: 'alt',
+  captionDelay: 250,
+});
 
 const refs = {
   searchForm: document.querySelector('#search-form'),
@@ -14,12 +18,11 @@ const refs = {
 
 refs.searchForm.addEventListener('submit', onFormSubmit);
 refs.loadMoreBtn.addEventListener('click', loadImages);
-
-refs.loadMoreBtn.style.display = 'none';
+refs.loadMoreBtn.classList.add('visually-hidden');
 
 function onFormSubmit(evt) {
   evt.preventDefault();
-  refs.loadMoreBtn.style.display = 'none';
+  refs.loadMoreBtn.classList.add('visually-hidden');
   renderClear(refs.gallery);
 
   const { searchQuery } = evt.currentTarget.elements;
@@ -50,11 +53,22 @@ async function loadImages() {
     renderGallery(imagesArray, refs.gallery);
     pixabayApiService.incrementPage();
 
+    const { height: cardHeight } = document
+      .querySelector('.gallery')
+      .firstElementChild.getBoundingClientRect();
+    window.scrollBy({
+      top: cardHeight * 0.25,
+      behavior: "smooth",
+    });
+    console.log(document
+      .querySelector('.gallery')
+      .firstElementChild.getBoundingClientRect())
+
     if (imagesArray.length < 40) {
-      refs.loadMoreBtn.style.display = 'none';
+      refs.loadMoreBtn.classList.add('visually-hidden');
       Notify.info("We're sorry, but you've reached the end of search results.");
     } else {
-      refs.loadMoreBtn.style.display = 'flex';
+      refs.loadMoreBtn.classList.remove('visually-hidden');
     }
   } catch (error) {
     return Notify.failure(`Error on server: ${error}. Please, repeat query.`);
@@ -97,8 +111,3 @@ function renderGallery(images, ulRef) {
 function renderClear(...refs) {
   refs.forEach(ref => ref.innerHTML = '');
 }
-
-const simpleLightBox = new SimpleLightbox('.gallery a', {
-  captionsData: 'alt',
-  captionDelay: 250,
-});

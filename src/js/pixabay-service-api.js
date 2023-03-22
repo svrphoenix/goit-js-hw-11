@@ -3,7 +3,6 @@ import axios from 'axios';
 const BASE_URL = 'https://pixabay.com/api/';
 const API_KEY = '34471861-e8084534cfe7ae4300b245128';
 
-
 export class PixabayApiService {
   constructor() {
     this.searchName = '';
@@ -25,7 +24,6 @@ export class PixabayApiService {
     const response = await axios.get(BASE_URL, options);
     return response.data;
   }
-
 
   incrementPage() {
     this.page += 1;
