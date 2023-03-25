@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export class PixabayApiService {
+export default class PixabayApiService {
   BASE_URL = 'https://pixabay.com/api/';
   #API_KEY = '34471861-e8084534cfe7ae4300b245128';
 
@@ -21,8 +21,8 @@ export class PixabayApiService {
         per_page: 40,
       },
     };
-    const response = await axios.get(this.BASE_URL, options);
-    return response.data;
+    const { data } = await axios.get(this.BASE_URL, options);
+    return data;
   }
 
   incrementPage() {
