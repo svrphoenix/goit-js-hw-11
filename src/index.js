@@ -60,9 +60,6 @@ async function loadImages() {
       top: cardHeight * 0.25,
       behavior: "smooth",
     });
-    console.log(document
-      .querySelector('.gallery')
-      .firstElementChild.getBoundingClientRect())
 
     if (imagesArray.length < 40) {
       refs.loadMoreBtn.classList.add('visually-hidden');
