@@ -1,6 +1,6 @@
 import './css/style.css';
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
-import refs from './js/refs';
+import {refs} from './js/refs';
 import { loadImages, loadInitialization } from './js/image-loader';
 
 refs.searchForm.addEventListener('submit', onFormSubmit);

@@ -1,5 +1,5 @@
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
-import refs from './refs';
+import {refs} from './refs';
 import renderGallery from './markup-service';
 import PixabayApiService from './pixabay-service-api';
 
@@ -28,18 +28,21 @@ export async function loadImages() {
     renderGallery(imagesArray, gallery);
     pixabayApiService.incrementPage();
 
-    const { height: cardHeight } = gallery.firstElementChild.getBoundingClientRect();
-    window.scrollBy({
-      top: cardHeight * 0.25,
-      behavior: 'smooth',
-    });
-
     if (imagesArray.length < 40) {
       loadMoreBtn.classList.add('visually-hidden');
       Notify.info("We're sorry, but you've reached the end of search results.");
     } else {
       loadMoreBtn.classList.remove('visually-hidden');
     }
+
+    // const { height: cardHeight } = gallery.firstElementChild.getBoundingClientRect();
+    const body = document.querySelector('body').getBoundingClientRect();
+    window.scrollBy({
+      top: body.height,
+      // top: cardHeight * 13,
+      behavior: 'smooth',
+    });
+
   } catch (error) {
     return Notify.failure(`Error on server: ${error}. Please, repeat query.`);
   }
